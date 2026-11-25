@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SwiftFlame Dispatch — Station Manager & Rider Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .brand-tab.active {
+      background-color: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="bg-slate-950 text-white sticky top-0 z-40 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <!-- Left: Logo & Portal Title -->
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center font-extrabold text-slate-950 text-lg shrink-0 shadow-lg shadow-orange-500/20">
+          🔥
+        </div>
+        <div class="truncate">
+          <div class="font-extrabold text-base sm:text-lg tracking-tight text-amber-400 leading-tight truncate">
+            SwiftFlame Dispatch
+          </div>
+          <div class="text-[11px] text-slate-400 font-medium truncate" id="roleSubtitle">
+            Station Manager &amp; Rider Portal
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Branch Selector, Customer Link & Logout -->
+      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5">
+          <span class="text-xs text-rose-400">📍</span>
+          <span class="hidden md:inline text-xs text-slate-400 font-semibold">Station:</span>
+          <select id="branchSelect" onchange="handleBranchChange(this.value)"
+            class="bg-transparent text-xs sm:text-sm font-bold text-white focus:outline-none cursor-pointer max-w-[160px] sm:max-w-[220px]">
+            <option value="" class="text-slate-900">Loading branches...</option>
+          </select>
+        </div>
+
+        <a href="index.html"
+          class="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-amber-400 hover:text-amber-300 bg-slate-900 border border-slate-800 px-3 py-2 rounded-xl transition">
+          ↗ Customer Site
+        </a>
+
+        <button onclick="logoutAdmin()"
+          class="text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl transition">
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toastBanner"
+    class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 text-white text-xs sm:text-sm font-semibold px-4 py-3 rounded-xl shadow-2xl border border-slate-700 items-center gap-2">
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-8 flex-1">
+
+    <!-- PIPELINE KPI CARDS -->
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-orange-600">Preparing</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+        </div>
+        <div id="kpiPreparing" class="text-3xl font-extrabold text-slate-900 mt-2">0</div>
+        <div class="text-xs text-slate-500 mt-1">Stages 1 &amp; 2 at depot</div>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600">Out for Delivery</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+        </div>
+        <div id="kpiOutForDelivery" class="text-3xl font-extrabold text-slate-900 mt-2">0</div>
+        <div class="text-xs text-slate-500 mt-1">Stage 3 out for delivery</div>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-600">Delivered Today</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+        </div>
+        <div id="kpiDelivered" class="text-3xl font-extrabold text-slate-900 mt-2">0</div>
+        <div class="text-xs text-slate-500 mt-1">Stage 4 completed</div>
+      </div>
+    </section>
+
+    <!-- CYLINDER INVENTORY & BRANCH PRICING -->
+    <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <h2 class="text-lg sm:text-xl font-extrabold text-slate-900">
+            Cylinder Inventory &amp; Pricing by Brand &amp; Size
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Adjust full cylinders, empty shells, and branch-specific refill or new cylinder prices.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <span id="activeBranchBadge"
+            class="text-xs font-bold px-3 py-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+            Station: —
+          </span>
+
+          <button onclick="restockAllInventory()"
+            class="text-xs font-extrabold bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl transition shadow-sm">
+            Restock All (25 Full)
+          </button>
+        </div>
+      </div>
+
+      <!-- BRAND FILTER TABS -->
+      <div id="brandTabs" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+        <!-- Populated via JS -->
+      </div>
+
+      <!-- INVENTORY CARDS GRID -->
+      <div id="inventoryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Populated via JS -->
+      </div>
+    </section>
+
+    <!-- LIVE DISPATCH ORDERS QUEUE -->
+    <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-extrabold text-slate-900">Live Station Orders</h2>
+          <p class="text-xs text-slate-500">Assign riders to active orders or advance delivery stages.</p>
+        </div>
+        <button onclick="refreshOrdersAndRiders()"
+          class="text-xs font-bold text-slate-700 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition">
+          ↻ Refresh
+        </button>
+      </div>
+
+      <div id="ordersList" class="space-y-3">
+        <div class="text-sm text-slate-400 py-6 text-center">Loading station orders...</div>
+      </div>
+    </section>
+
+    <!-- RIDER MANAGEMENT SECTION -->
+    <section class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-extrabold text-slate-900">Station Riders &amp; Approvals</h2>
+          <p class="text-xs text-slate-500">Add new delivery riders to this branch, approve signups, or remove riders.</p>
+        </div>
+        <button onclick="refreshOrdersAndRiders()"
+          class="self-start sm:self-auto text-xs font-bold text-slate-700 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition">
+          ↻ Refresh
+        </button>
+      </div>
+
+      <!-- ADD NEW RIDER INLINE FORM -->
+      <form onsubmit="createStationRider(event)"
+        class="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+        <div>
+          <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Rider Full Name *</label>
+          <input id="newRiderName" type="text" required placeholder="e.g. Kelvin Mwangi"
+            class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Phone / Login ID *</label>
+          <input id="newRiderPhone" type="text" required placeholder="e.g. 0712345678"
+            class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+        </div>
+        <div>
+          <label class="block text-[10px] font-extrabold uppercase text-slate-500 mb-1">Motorbike Plate</label>
+          <input id="newRiderPlate" type="text" placeholder="e.g. KMFA 412B"
+            class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:border-orange-500" />
+        </div>
+        <div class="flex items-end">
+          <button type="submit"
+            class="w-full py-2 px-4 rounded-lg bg-orange-500 hover:bg-orange-600 text-slate-950 font-extrabold text-xs transition shadow-sm">
+            + Add Station Rider
+          </button>
+        </div>
+      </form>
+
+      <div id="ridersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="text-sm text-slate-400 py-4">Loading riders...</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Shared Supabase client (`supabaseClient`) provided by db.js -->
+  <script src="db.js"></script>
+  <script>
+    // =========================================================================
+    // 1. CATALOG CONSTANTS & STATE
+    // =========================================================================
+    const GAS_BRANDS = [
+      'TotalEnergies',
+      'K-Gas',
+      'Progas',
+      'Rubis Gas',
+      'MenGas',
+      'Hass Gas'
+    ];
+
+    const CYLINDER_SIZES = [
+      { size: '6kg',    refill: 1350,  newCyl: 4200 },
+      { size: '13kg',   refill: 2850,  newCyl: 6800 },
+      { size: '22.5kg', refill: 4850,  newCyl: 10500 },
+      { size: '50kg',   refill: 10400, newCyl: 19500 }
+    ];
+
+    let currentUser = null;
+    let tenantsList = [];
+    let selectedTenantId = null;
+    let selectedBrand = 'TotalEnergies';
+    let inventoryData = [];
+    let ordersData = [];
+    let ridersData = [];
+
+    // =========================================================================
+    // 2. HELPERS & AUTH CHECK
+    // =========================================================================
+    function showToast(msg) {
+      const el = document.getElementById('toastBanner');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+      }, 3200);
+    }
+
+    function normalizeSize(row) {
+      if (row.size_kg !== null && row.size_kg !== undefined) {
+        return `${Number(row.size_kg)}kg`.toLowerCase();
+      }
+      if (row.cylinder_size) return String(row.cylinder_size).toLowerCase();
+      return '';
+    }
+
+    function checkAdminSession() {
+      try {
+        const raw = localStorage.getItem('swiftflame_current_user');
+        if (raw) currentUser = JSON.parse(raw);
+      } catch (e) {
+        console.warn('Invalid session JSON:', e);
+      }
+    }
+
+    function logoutAdmin() {
+      localStorage.removeItem('swiftflame_current_user');
+      window.location.href = 'index.html';
+    }
+
+    // =========================================================================
+    // 3. LOAD BRANCHES (TENANTS) & ENFORCE STATION MANAGER LOCK
+    // =========================================================================
+    async function loadBranches() {
+      if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+        alert('❌ Supabase client not found. Verify db.js is in the same folder.');
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from('tenants')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) {
+        alert('❌ Failed to load stations: ' + error.message);
+        return;
+      }
+
+      tenantsList = data || [];
+      const selectEl = document.getElementById('branchSelect');
+      selectEl.innerHTML = '';
+
+      if (tenantsList.length === 0) {
+        selectEl.innerHTML = '<option value="">No stations found</option>';
+        return;
+      }
+
+      tenantsList.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name;
+        opt.className = 'text-slate-900';
+        selectEl.appendChild(opt);
+      });
+
+      const isManager = currentUser && currentUser.role === 'manager' && currentUser.tenant_id;
+      if (isManager) {
+        selectedTenantId = currentUser.tenant_id;
+        selectEl.value = selectedTenantId;
+        selectEl.disabled = true;
+        document.getElementById('roleSubtitle').textContent =
+          `Station Manager • ${currentUser.full_name || currentUser.name || 'Branch Locked'}`;
+      } else {
+        const savedBranch = localStorage.getItem('swiftflame_admin_branch');
+        const validSaved = tenantsList.find(t => String(t.id) === String(savedBranch));
+        selectedTenantId = validSaved ? validSaved.id : tenantsList[0].id;
+        selectEl.value = selectedTenantId;
+      }
+
+      updateActiveBranchBadge();
+    }
+
+    function updateActiveBranchBadge() {
+      const branch = tenantsList.find(t => String(t.id) === String(selectedTenantId));
+      const badge = document.getElementById('activeBranchBadge');
+      if (badge) {
+        badge.textContent = branch ? branch.name : 'Unknown Station';
+      }
+    }
+
+    async function handleBranchChange(newTenantId) {
+      selectedTenantId = newTenantId;
+      localStorage.setItem('swiftflame_admin_branch', newTenantId);
+      updateActiveBranchBadge();
+      await loadRiders();
+      await Promise.all([loadInventory(), loadOrders()]);
+    }
+
+    async function refreshOrdersAndRiders() {
+      await loadRiders();
+      await loadOrders();
+    }
+
+    // =========================================================================
+    // 4. BRAND TABS & INVENTORY + PRICE GRID RENDERING
+    // =========================================================================
+    function renderBrandTabs() {
+      const container = document.getElementById('brandTabs');
+      container.innerHTML = GAS_BRANDS.map(brand => {
+        const activeClass = brand === selectedBrand
+          ? 'active shadow-sm'
+          : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-transparent';
+        return `
+          <button onclick="selectBrandTab('${brand}')"
+            class="brand-tab ${activeClass} px-4 py-2 rounded-full text-xs sm:text-sm font-bold border transition whitespace-nowrap">
+            ${brand}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectBrandTab(brand) {
+      selectedBrand = brand;
+      renderBrandTabs();
+      renderInventoryGrid();
+    }
+
+    async function loadInventory() {
+      if (!selectedTenantId) return;
+
+      const { data, error } = await supabaseClient
+        .from('inventory')
+        .select('*')
+        .eq('tenant_id', selectedTenantId);
+
+      if (error) {
+        alert('❌ Failed to load inventory: ' + error.message);
+        return;
+      }
+
+      inventoryData = data || [];
+      renderInventoryGrid();
+    }
+
+    function renderInventoryGrid() {
+      const grid = document.getElementById('inventoryGrid');
+      if (!grid) return;
+
+      grid.innerHTML = CYLINDER_SIZES.map(sizeMeta => {
+        const item = inventoryData.find(row =>
+          String(row.tenant_id) === String(selectedTenantId) &&
+          (row.brand || '').toLowerCase() === selectedBrand.toLowerCase() &&
+          normalizeSize(row) === sizeMeta.size.toLowerCase()
+        );
+
+        const fullCount = item ? Number(item.full_count ?? 0) : 0;
+        const emptyCount = item ? Number(item.empty_count ?? 0) : 0;
+        const currentRefill = Number(item?.refill_price > 0 ? item.refill_price : sizeMeta.refill);
+        const currentNewCyl = Number(
+          (item?.new_cylinder_price ?? item?.new_price) > 0
+            ? (item.new_cylinder_price ?? item.new_price)
+            : sizeMeta.newCyl
+        );
+
+        return `
+          <div class="border border-slate-200 rounded-2xl p-4 bg-white hover:border-slate-300 transition flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <h3 class="text-base font-extrabold text-slate-900">${selectedBrand} ${sizeMeta.size}</h3>
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${fullCount > 5 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">
+                  ${fullCount > 0 ? 'In Stock' : 'Empty'}
+                </span>
+              </div>
+
+              <!-- BRANCH-SPECIFIC EDITABLE PRICES -->
+              <div class="grid grid-cols-2 gap-2 mt-3 p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl">
+                <div>
+                  <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wide mb-1">
+                    Refill (KES)
+                  </label>
+                  <input type="number" min="0" step="50" value="${currentRefill}"
+                    onchange="updateBranchPrice('${selectedBrand}', '${sizeMeta.size}', 'refill', this.value)"
+                    class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-extrabold text-slate-900 focus:outline-none focus:border-orange-500" />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wide mb-1">
+                    New Cyl (KES)
+                  </label>
+                  <input type="number" min="0" step="50" value="${currentNewCyl}"
+                    onchange="updateBranchPrice('${selectedBrand}', '${sizeMeta.size}', 'newCyl', this.value)"
+                    class="w-full px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-extrabold text-slate-900 focus:outline-none focus:border-orange-500" />
+                </div>
+              </div>
+            </div>
+
+            <!-- FULL & EMPTY STOCK COUNTERS -->
+            <div class="grid grid-cols-2 gap-2.5 mt-3">
+              <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-2.5 text-center">
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800">Full</div>
+                <div class="text-xl font-extrabold text-slate-900 my-1">${fullCount}</div>
+                <div class="flex items-center justify-center gap-2">
+                  <button onclick="adjustStockInstant('${selectedBrand}', '${sizeMeta.size}', -1, 0)"
+                    class="w-7 h-7 rounded-lg bg-white border border-emerald-300 font-extrabold text-slate-700 hover:bg-emerald-100 transition">
+                    -
+                  </button>
+                  <button onclick="adjustStockInstant('${selectedBrand}', '${sizeMeta.size}', 1, 0)"
+                    class="w-7 h-7 rounded-lg bg-white border border-emerald-300 font-extrabold text-slate-700 hover:bg-emerald-100 transition">
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-2.5 text-center">
+                <div class="text-[10px] font-extrabold uppercase tracking-wider text-amber-800">Empty</div>
+                <div class="text-xl font-extrabold text-slate-900 my-1">${emptyCount}</div>
+                <div class="flex items-center justify-center gap-2">
+                  <button onclick="adjustStockInstant('${selectedBrand}', '${sizeMeta.size}', 0, -1)"
+                    class="w-7 h-7 rounded-lg bg-white border border-amber-300 font-extrabold text-slate-700 hover:bg-amber-100 transition">
+                    -
+                  </button>
+                  <button onclick="adjustStockInstant('${selectedBrand}', '${sizeMeta.size}', 0, 1)"
+                    class="w-7 h-7 rounded-lg bg-white border border-amber-300 font-extrabold text-slate-700 hover:bg-amber-100 transition">
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 5. INSTANT STOCK ADJUSTMENTS, BRANCH PRICE UPDATES & BULK RESTOCK
+    // =========================================================================
+    async function adjustStockInstant(brand, size, deltaFull, deltaEmpty) {
+      if (!selectedTenantId) return;
+      const sizeMeta = CYLINDER_SIZES.find(s => s.size === size) || CYLINDER_SIZES[1];
+
+      const existing = inventoryData.find(row =>
+        String(row.tenant_id) === String(selectedTenantId) &&
+        (row.brand || '').toLowerCase() === brand.toLowerCase() &&
+        normalizeSize(row) === size.toLowerCase()
+      );
+
+      if (existing) {
+        const nextFull = Math.max(0, Number(existing.full_count ?? 0) + deltaFull);
+        const nextEmpty = Math.max(0, Number(existing.empty_count ?? 0) + deltaEmpty);
+
+        existing.full_count = nextFull;
+        existing.empty_count = nextEmpty;
+        renderInventoryGrid();
+
+        const { error } = await supabaseClient
+          .from('inventory')
+          .update({ full_count: nextFull, empty_count: nextEmpty })
+          .eq('id', existing.id);
+
+        if (error) {
+          alert(`❌ Failed to update ${brand} ${size}: ${error.message}`);
+          await loadInventory();
+        }
+      } else {
+        const newRow = {
+          tenant_id: selectedTenantId,
+          brand,
+          cylinder_size: size,
+          size_kg: parseFloat(size),
+          refill_price: sizeMeta.refill,
+          new_price: sizeMeta.newCyl,
+          new_cylinder_price: sizeMeta.newCyl,
+          full_count: Math.max(0, deltaFull),
+          empty_count: Math.max(0, deltaEmpty)
+        };
+
+        const { data, error } = await supabaseClient
+          .from('inventory')
+          .insert([newRow])
+          .select()
+          .single();
+
+        if (error) {
+          alert(`❌ Failed to initialize ${brand} ${size}: ${error.message}`);
+          return;
+        }
+
+        inventoryData.push(data);
+        renderInventoryGrid();
+        showToast(`✅ Initialized ${brand} ${size}`);
+      }
+    }
+
+    async function updateBranchPrice(brand, size, priceType, rawValue) {
+      if (!selectedTenantId) return;
+      const numericPrice = Math.max(0, Number(rawValue) || 0);
+      const sizeMeta = CYLINDER_SIZES.find(s => s.size === size) || CYLINDER_SIZES[1];
+
+      const existing = inventoryData.find(row =>
+        String(row.tenant_id) === String(selectedTenantId) &&
+        (row.brand || '').toLowerCase() === brand.toLowerCase() &&
+        normalizeSize(row) === size.toLowerCase()
+      );
+
+      if (existing) {
+        const updates = priceType === 'refill'
+          ? { refill_price: numericPrice }
+          : { new_cylinder_price: numericPrice, new_price: numericPrice };
+
+        const { error } = await supabaseClient
+          .from('inventory')
+          .update(updates)
+          .eq('id', existing.id);
+
+        if (error) {
+          alert(`❌ Failed to update ${brand} ${size} price: ${error.message}`);
+          return;
+        }
+
+        Object.assign(existing, updates);
+      } else {
+        const newRow = {
+          tenant_id: selectedTenantId,
+          brand,
+          cylinder_size: size,
+          size_kg: parseFloat(size),
+          refill_price: priceType === 'refill' ? numericPrice : sizeMeta.refill,
+          new_price: priceType === 'newCyl' ? numericPrice : sizeMeta.newCyl,
+          new_cylinder_price: priceType === 'newCyl' ? numericPrice : sizeMeta.newCyl,
+          full_count: 0,
+          empty_count: 0
+        };
+
+        const { data, error } = await supabaseClient
+          .from('inventory')
+          .insert([newRow])
+          .select()
+          .single();
+
+        if (error) {
+          alert(`❌ Failed to save ${brand} ${size} price: ${error.message}`);
+          return;
+        }
+
+        inventoryData.push(data);
+      }
+
+      const label = priceType === 'refill' ? 'Refill' : 'New Cylinder';
+      showToast(`✅ ${brand} ${size} ${label} set to KES ${numericPrice.toLocaleString()}`);
+    }
+
+    async function restockAllInventory() {
+      if (!selectedTenantId) return;
+
+      const missingRows = [];
+      const existingIds = [];
+
+      GAS_BRANDS.forEach(brand => {
+        CYLINDER_SIZES.forEach(s => {
+          const match = inventoryData.find(row =>
+            String(row.tenant_id) === String(selectedTenantId) &&
+            (row.brand || '').toLowerCase() === brand.toLowerCase() &&
+            normalizeSize(row) === s.size.toLowerCase()
+          );
+
+          if (match) {
+            existingIds.push(match.id);
+          } else {
+            missingRows.push({
+              tenant_id: selectedTenantId,
+              brand,
+              cylinder_size: s.size,
+              size_kg: parseFloat(s.size),
+              refill_price: s.refill,
+              new_price: s.newCyl,
+              new_cylinder_price: s.newCyl,
+              full_count: 25,
+              empty_count: 5
+            });
+          }
+        });
+      });
+
+      if (existingIds.length > 0) {
+        const { error: updateErr } = await supabaseClient
+          .from('inventory')
+          .update({ full_count: 25 })
+          .in('id', existingIds);
+
+        if (updateErr) {
+          alert('❌ Failed to restock existing items: ' + updateErr.message);
+          return;
+        }
+      }
+
+      if (missingRows.length > 0) {
+        const { error: insertErr } = await supabaseClient
+          .from('inventory')
+          .insert(missingRows);
+
+        if (insertErr) {
+          alert('❌ Failed to initialize missing stock: ' + insertErr.message);
+          return;
+        }
+      }
+
+      await loadInventory();
+      showToast('✅ All brands restocked to 25 Full cylinders!');
+    }
+
+    // =========================================================================
+    // 6. LIVE STATION ORDERS, RIDER ASSIGNMENT & PIPELINE STAGES
+    // =========================================================================
+    async function loadOrders() {
+      if (!selectedTenantId) return;
+
+      const { data, error } = await supabaseClient
+        .from('orders')
+        .select('*')
+        .eq('tenant_id', selectedTenantId)
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      if (error) {
+        console.error('Orders fetch error:', error);
+        return;
+      }
+
+      ordersData = data || [];
+      updatePipelineKpis();
+      renderOrdersList();
+    }
+
+    function updatePipelineKpis() {
+      const preparing = ordersData.filter(o =>
+        ['pending', 'confirmed', 'preparing', 'stage_1', 'stage_2'].includes((o.status || '').toLowerCase())
+      ).length;
+
+      const outForDelivery = ordersData.filter(o =>
+        ['out_for_delivery', 'in_transit', 'dispatched', 'stage_3'].includes((o.status || '').toLowerCase())
+      ).length;
+
+      const delivered = ordersData.filter(o =>
+        ['delivered', 'completed', 'stage_4'].includes((o.status || '').toLowerCase())
+      ).length;
+
+      document.getElementById('kpiPreparing').textContent = preparing;
+      document.getElementById('kpiOutForDelivery').textContent = outForDelivery;
+      document.getElementById('kpiDelivered').textContent = delivered;
+    }
+
+    function renderOrdersList() {
+      const container = document.getElementById('ordersList');
+      if (!container) return;
+
+      if (ordersData.length === 0) {
+        container.innerHTML = `<div class="text-sm text-slate-400 py-6 text-center">No orders for this station yet.</div>`;
+        return;
+      }
+
+      const approvedRiders = ridersData.filter(r => Boolean(r.is_approved ?? r.approved ?? true));
+
+      container.innerHTML = ordersData.map(order => {
+        const status = (order.status || 'preparing').toLowerCase();
+        const shortId = String(order.id).slice(0, 8).toUpperCase();
+        const total = Number(order.total_amount ?? order.total_price ?? 0).toLocaleString();
+        const customerName = order.customer_name || 'Customer';
+        const customerPhone = order.customer_phone || '';
+        const address = order.delivery_address || order.location || 'Nairobi';
+        const assignedRider = ridersData.find(r => String(r.id) === String(order.rider_id));
+        const assignedLabel = assignedRider
+          ? (assignedRider.full_name || assignedRider.name)
+          : (order.rider_name || 'Unassigned');
+
+        const riderOptions = approvedRiders.map(r => {
+          const rName = r.full_name || r.name || 'Rider';
+          const selected = String(r.id) === String(order.rider_id) ? 'selected' : '';
+          return `<option value="${r.id}" ${selected}>🛵 ${rName}</option>`;
+        }).join('');
+
+        return `
+          <div class="border border-slate-200 rounded-xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-slate-50/50">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-extrabold px-2 py-0.5 rounded bg-slate-900 text-white">#${shortId}</span>
+                <span class="text-xs font-bold uppercase px-2 py-0.5 rounded bg-orange-100 text-orange-800">${status.replace(/_/g, ' ')}</span>
+                <span class="text-xs font-extrabold text-slate-900">KES ${total}</span>
+                <span class="text-xs font-bold px-2 py-0.5 rounded ${order.rider_id ? 'bg-blue-100 text-blue-800' : 'bg-slate-200 text-slate-600'}">
+                  Rider: ${assignedLabel}
+                </span>
+              </div>
+              <div class="text-sm font-bold text-slate-800">${customerName} ${customerPhone ? `• ${customerPhone}` : ''}</div>
+              <div class="text-xs text-slate-500">📍 ${address}</div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <select onchange="assignRiderToOrder('${order.id}', this.value)"
+                class="text-xs font-bold px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-blue-500">
+                <option value="">-- Assign Rider --</option>
+                ${riderOptions}
+              </select>
+
+              <button onclick="updateOrderStatus('${order.id}', 'preparing')"
+                class="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100">
+                Preparing
+              </button>
+              <button onclick="updateOrderStatus('${order.id}', 'out_for_delivery')"
+                class="text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                Dispatch
+              </button>
+              <button onclick="updateOrderStatus('${order.id}', 'delivered')"
+                class="text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
+                Delivered
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function assignRiderToOrder(orderId, riderId) {
+      if (!riderId) return;
+      const rider = ridersData.find(r => String(r.id) === String(riderId));
+      const riderName = rider ? (rider.full_name || rider.name || 'Rider') : 'Rider';
+
+      const { error } = await supabaseClient
+        .from('orders')
+        .update({
+          rider_id: riderId,
+          rider_name: riderName,
+          status: 'out_for_delivery'
+        })
+        .eq('id', orderId);
+
+      if (error) {
+        alert('❌ Failed to assign rider: ' + error.message);
+        return;
+      }
+
+      showToast(`🛵 Assigned to ${riderName} & marked Out for Delivery`);
+      await loadOrders();
+    }
+
+    async function updateOrderStatus(orderId, newStatus) {
+      const { error } = await supabaseClient
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId);
+
+      if (error) {
+        alert('❌ Failed to update order: ' + error.message);
+        return;
+      }
+
+      showToast(`✅ Order updated to ${newStatus.replace(/_/g, ' ')}`);
+      await loadOrders();
+    }
+
+    // =========================================================================
+    // 7. RIDER MANAGEMENT (CREATE, APPROVE & DELETE)
+    // =========================================================================
+    async function loadRiders() {
+      if (!selectedTenantId) return;
+
+      const { data, error } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('role', 'rider')
+        .eq('tenant_id', selectedTenantId);
+
+      if (error) {
+        console.error('Riders fetch error:', error);
+        return;
+      }
+
+      ridersData = data || [];
+      renderRidersList();
+    }
+
+    function renderRidersList() {
+      const container = document.getElementById('ridersList');
+      if (!container) return;
+
+      if (ridersData.length === 0) {
+        container.innerHTML = `<div class="text-sm text-slate-400 col-span-full py-3">No riders assigned to this branch yet. Add one above.</div>`;
+        return;
+      }
+
+      container.innerHTML = ridersData.map(rider => {
+        const isApproved = Boolean(rider.is_approved ?? rider.approved ?? true);
+        const name = rider.full_name || rider.name || 'Unnamed Rider';
+        const phone = rider.phone || rider.email || 'No contact';
+        const plate = rider.bike_plate ? ` • 🏍️ ${rider.bike_plate}` : '';
+
+        return `
+          <div class="border border-slate-200 rounded-xl p-4 flex items-center justify-between gap-3 bg-white">
+            <div class="min-w-0">
+              <div class="font-bold text-sm text-slate-900 truncate">${name}</div>
+              <div class="text-xs text-slate-500 truncate">${phone}${plate}</div>
+              <span class="inline-block mt-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ${isApproved ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                ${isApproved ? 'Active Rider' : 'Pending Approval'}
+              </span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              ${!isApproved ? `
+                <button onclick="approveRider('${rider.id}')"
+                  class="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
+                  Approve
+                </button>
+              ` : ''}
+              <button onclick="deleteRider('${rider.id}')"
+                class="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100">
+                Remove
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function createStationRider(event) {
+      event.preventDefault();
+      if (!selectedTenantId) return;
+
+      const fullName = document.getElementById('newRiderName').value.trim();
+      const phone = document.getElementById('newRiderPhone').value.trim();
+      const plate = document.getElementById('newRiderPlate').value.trim();
+      if (!fullName || !phone) return;
+
+      const payload = {
+        tenant_id: selectedTenantId,
+        role: 'rider',
+        full_name: fullName,
+        phone: phone,
+        bike_plate: plate || null,
+        is_approved: true
+      };
+
+      const { error } = await supabaseClient
+        .from('profiles')
+        .insert([payload]);
+
+      if (error) {
+        alert('❌ Failed to add rider: ' + error.message);
+        return;
+      }
+
+      document.getElementById('newRiderName').value = '';
+      document.getElementById('newRiderPhone').value = '';
+      document.getElementById('newRiderPlate').value = '';
+      showToast(`✅ Added rider ${fullName}`);
+      await loadRiders();
+      renderOrdersList();
+    }
+
+    async function approveRider(riderId) {
+      const { error } = await supabaseClient
+        .from('profiles')
+        .update({ is_approved: true })
+        .eq('id', riderId);
+
+      if (error) {
+        alert('❌ Failed to approve rider: ' + error.message);
+        return;
+      }
+
+      showToast('✅ Rider approved');
+      await loadRiders();
+      renderOrdersList();
+    }
+
+    async function deleteRider(riderId) {
+      if (!confirm('Remove this rider from the station?')) return;
+
+      const { error } = await supabaseClient
+        .from('profiles')
+        .delete()
+        .eq('id', riderId);
+
+      if (error) {
+        alert('❌ Failed to remove rider: ' + error.message);
+        return;
+      }
+
+      showToast('🗑️ Rider removed');
+      await loadRiders();
+      renderOrdersList();
+    }
+
+    // =========================================================================
+    // 8. BOOTSTRAP PORTAL
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      checkAdminSession();
+      renderBrandTabs();
+      await loadBranches();
+      await loadRiders();
+      await Promise.all([loadInventory(), loadOrders()]);
+    });
+  </script>
+</body>
+</html>

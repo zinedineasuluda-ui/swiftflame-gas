@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwiftFlame SaaS • Super Admin Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen pb-14">
+
+    <!-- TOP SAAS HEADER -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">👑</span>
+                <div>
+                    <h1 class="font-extrabold text-lg text-white leading-tight">SwiftFlame SaaS • Super Admin</h1>
+                    <p class="text-xs text-slate-400">Platform Licensing, Tenant Onboarding & Subscription Control</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <a href="index.html" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-xs font-bold px-3.5 py-2 rounded-xl transition">
+                    🏪 View Storefront
+                </a>
+                <a href="admin.html" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-xs font-bold px-3.5 py-2 rounded-xl transition">
+                    🔑 Station Admin
+                </a>
+                <button onclick="lockSuperAdmin()" class="bg-red-600 hover:bg-red-500 text-xs font-bold px-3.5 py-2 rounded-xl transition">
+                    🔒 Lock Portal
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-6 space-y-6">
+
+        <!-- SAAS REVENUE & PLATFORM METRICS -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <div class="text-xs font-bold text-slate-400 uppercase">Active Gas Shops</div>
+                <div class="text-3xl font-extrabold text-white mt-1" id="saas-active-tenants">0</div>
+                <div class="text-[11px] text-green-400 mt-1" id="saas-total-tenants">0 total onboarded</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <div class="text-xs font-bold text-slate-400 uppercase">Monthly Recurring (MRR)</div>
+                <div class="text-3xl font-extrabold text-green-400 mt-1" id="saas-mrr">KES 0</div>
+                <div class="text-[11px] text-slate-400 mt-1">From active subscriptions</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <div class="text-xs font-bold text-slate-400 uppercase">Network Orders Processed</div>
+                <div class="text-3xl font-extrabold text-orange-400 mt-1" id="saas-total-orders">0</div>
+                <div class="text-[11px] text-slate-400 mt-1">Across all Nairobi depots</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+                <div class="text-xs font-bold text-slate-400 uppercase">Network GMV (Gas Sales)</div>
+                <div class="text-2xl font-extrabold text-white mt-1" id="saas-gmv">KES 0</div>
+                <div class="text-[11px] text-slate-400 mt-1">Channeled to client Tills</div>
+            </div>
+        </div>
+
+        <!-- ONBOARD NEW GAS SHOP FORM -->
+        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div>
+                <h2 class="text-lg font-extrabold text-white">➕ Onboard New Nairobi Gas Shop</h2>
+                <p class="text-xs text-slate-400">Creates a dedicated storefront link, M-Pesa Till routing, and Station Manager login instantly.</p>
+            </div>
+
+            <form onsubmit="onboardNewShop(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Gas Shop / Branch Name</label>
+                    <input type="text" id="shop-name" required placeholder="e.g. South B Express Gas"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">URL Slug (No Spaces)</label>
+                    <input type="text" id="shop-slug" required placeholder="e.g. southb"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white lowercase focus:outline-none focus:border-orange-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Subscription Plan</label>
+                    <select id="shop-plan" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+                        <option value="Starter Depot|3500">Starter Depot (KES 3,500/mo)</option>
+                        <option value="Pro Station|7500" selected>Pro Station (KES 7,500/mo)</option>
+                        <option value="Multi-Branch Enterprise|6000">Enterprise Branch (KES 6,000/mo)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Shop M-Pesa Till / Paybill</label>
+                    <input type="text" id="shop-till" required placeholder="e.g. 9182734"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">WhatsApp Dispatch Number (254...)</label>
+                    <input type="text" id="shop-whatsapp" required placeholder="e.g. 254744555666"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Delivery Coverage Estates</label>
+                    <input type="text" id="shop-zones" required placeholder="South B, South C, Nairobi West, Bellevue"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Station Manager Name</label>
+                    <input type="text" id="shop-mgr-name" required placeholder="e.g. Grace Wanjiku"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Manager Login Phone</label>
+                    <input type="tel" id="shop-mgr-phone" required placeholder="e.g. 0744555666"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-extrabold py-2.5 px-4 rounded-xl text-sm transition">
+                        🚀 Activate Gas Shop & Manager
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- LICENSED GAS SHOPS DIRECTORY -->
+        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-extrabold text-white">🏢 Licensed Gas Shops & Subscriptions</h2>
+                    <p class="text-xs text-slate-400">Suspending a shop immediately locks its Manager & Rider portals until renewal</p>
+                </div>
+            </div>
+
+            <div id="tenants-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+    </main>
+
+    <!-- Supabase SDK & Shared Multi-Tenant DB Layer -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
+
+    <script>
+        // 1. Super Admin PIN Protection
+        if (sessionStorage.getItem('swiftflame_superadmin_unlocked') !== 'true') {
+            const pin = prompt('Enter Super Admin Master PIN (Demo PIN: 9999):');
+            if (pin !== '9999') {
+                alert('Invalid Super Admin PIN.');
+                window.location.href = 'index.html';
+            } else {
+                sessionStorage.setItem('swiftflame_superadmin_unlocked', 'true');
+            }
+        }
+
+        function lockSuperAdmin() {
+            sessionStorage.removeItem('swiftflame_superadmin_unlocked');
+            window.location.href = 'index.html';
+        }
+
+        // 2. Onboard New Nairobi Gas Shop into Supabase
+        async function onboardNewShop(e) {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerText = '⏳ Saving to Cloud...';
+
+            try {
+                const name = document.getElementById('shop-name').value.trim();
+                const slug = document.getElementById('shop-slug').value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+                const [plan, feeStr] = document.getElementById('shop-plan').value.split('|');
+                const till = document.getElementById('shop-till').value.trim();
+                const whatsapp = document.getElementById('shop-whatsapp').value.trim();
+                const zones = document.getElementById('shop-zones').value.split(',').map(z => z.trim()).filter(Boolean);
+                const mgrName = document.getElementById('shop-mgr-name').value.trim();
+                const mgrPhone = document.getElementById('shop-mgr-phone').value.trim();
+
+                await SwiftFlameDB.onboardTenant(
+                    {
+                        slug,
+                        name,
+                        mpesa_type: 'Buy Goods Till',
+                        mpesa_account: till,
+                        account_name: name.toUpperCase(),
+                        whatsapp,
+                        hotline: mgrPhone,
+                        zones: zones.length ? zones : ['Local Delivery Zone'],
+                        plan,
+                        monthly_fee: Number(feeStr),
+                        is_active: true
+                    },
+                    {
+                        name: mgrName,
+                        phone: mgrPhone,
+                        password: '1234'
+                    }
+                );
+
+                e.target.reset();
+                await renderSuperAdmin();
+                alert(`✅ ${name} Saved to Cloud Database!\n\nStorefront Link: index.html?station=${slug}\nManager Login: ${mgrPhone} (Password: 1234)\nM-Pesa Till: ${till}`);
+            } catch (err) {
+                console.error(err);
+                alert(`❌ Error onboarding shop: ${err.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = '🚀 Activate Gas Shop & Manager';
+            }
+        }
+
+        // 3. Suspend / Activate Subscription in Supabase
+        async function toggleShopSubscription(tenantId, currentStatus) {
+            try {
+                await SwiftFlameDB.setTenantStatus(tenantId, !currentStatus);
+                await renderSuperAdmin();
+            } catch (err) {
+                alert(`Error updating status: ${err.message}`);
+            }
+        }
+
+        function copyShopLink(slug) {
+            const baseUrl = window.location.href.replace('superadmin.html', 'index.html');
+            const fullUrl = `${baseUrl}?station=${slug}`;
+            navigator.clipboard.writeText(fullUrl);
+            alert(`📋 Custom Branch Link Copied!\n\n${fullUrl}`);
+        }
+
+        // 4. Render Live SaaS Metrics & Tenants from PostgreSQL
+        async function renderSuperAdmin() {
+            try {
+                const [tenants, orders] = await Promise.all([
+                    SwiftFlameDB.getTenants(false),
+                    SwiftFlameDB.getOrders()
+                ]);
+
+                const activeTenants = tenants.filter(t => t.is_active);
+                const mrr = activeTenants.reduce((sum, t) => sum + (t.monthly_fee || 0), 0);
+                const gmv = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+
+                document.getElementById('saas-active-tenants').innerText = activeTenants.length;
+                document.getElementById('saas-total-tenants').innerText = `${tenants.length} total onboarded`;
+                document.getElementById('saas-mrr').innerText = `KES ${mrr.toLocaleString()}`;
+                document.getElementById('saas-total-orders').innerText = orders.length;
+                document.getElementById('saas-gmv').innerText = `KES ${gmv.toLocaleString()}`;
+
+                const listEl = document.getElementById('tenants-list');
+                if (tenants.length === 0) {
+                    listEl.innerHTML = `<div class="col-span-full text-center text-slate-400 py-8">No gas shops onboarded yet. Use the form above to add your first Nairobi depot!</div>`;
+                    return;
+                }
+
+                listEl.innerHTML = tenants.map(t => {
+                    const shopOrders = orders.filter(o => o.tenant_id === t.id).length;
+                    return `
+                        <div class="border ${t.is_active ? 'border-slate-700 bg-slate-950' : 'border-red-900/60 bg-red-950/20'} rounded-2xl p-4 flex flex-col justify-between gap-4">
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between items-start gap-2">
+                                    <div>
+                                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-orange-400">${t.plan} • KES ${(t.monthly_fee || 0).toLocaleString()}/mo</span>
+                                        <h3 class="font-extrabold text-base text-white">${t.name}</h3>
+                                    </div>
+                                    <span class="${t.is_active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'} text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                                        ${t.is_active ? 'Active' : 'Suspended'}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-slate-400">💳 M-Pesa Till: <strong class="text-slate-200">${t.mpesa_account}</strong> • 📦 ${shopOrders} orders</div>
+                                <div class="text-[11px] text-slate-500 truncate">📍 ${(t.zones || []).join(', ')}</div>
+                            </div>
+
+                            <div class="flex justify-between items-center border-t border-slate-800 pt-3 gap-2">
+                                <button onclick="copyShopLink('${t.slug}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                                    🔗 Copy Store Link
+                                </button>
+                                <button onclick="toggleShopSubscription('${t.id}', ${t.is_active})" class="${t.is_active ? 'text-red-400 hover:underline' : 'bg-green-600 text-white px-3 py-1.5 rounded-lg'} text-xs font-bold transition">
+                                    ${t.is_active ? '⏸ Suspend' : '▶ Activate'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Supabase load error:', err);
+                alert(`Database Connection Error: ${err.message}\n\nCheck that you pasted your anon public key into db.js and ran the RLS policies.`);
+            }
+        }
+
+        renderSuperAdmin();
+    </script>
+</body>
+</html>

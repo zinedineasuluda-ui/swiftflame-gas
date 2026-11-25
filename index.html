@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwiftFlame Gas | Fast LPG Refill & Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <!-- Top Emergency Bar -->
+    <div class="bg-slate-900 text-white text-xs py-2 px-4 text-center">
+        🚀 Express 30-Min Delivery • <span id="station-banner-name" class="font-semibold text-slate-200">Westlands Branch</span> • Call/WhatsApp: <span id="station-hotline" class="font-bold text-orange-400">0700 123 456</span>
+    </div>
+
+<!-- Navigation -->
+    <nav class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+            <!-- Left: Logo -->
+            <a href="#" class="flex items-center gap-2 font-extrabold text-lg sm:text-xl text-slate-900">
+                <span class="bg-orange-600 text-white px-2 py-1 rounded-lg text-sm sm:text-base">🔥</span>
+                <span id="station-logo-name">SwiftFlame<span class="text-orange-600">Gas</span></span>
+            </a>
+
+            <!-- Right: Sign In & Single Cart Button -->
+            <div class="flex items-center gap-1.5 sm:gap-2 order-2 lg:order-3">
+                <button id="auth-nav-btn" onclick="openAuthModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap">
+                    👤 Sign In
+                </button>
+                <button onclick="toggleCart()" class="relative bg-slate-900 hover:bg-slate-800 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition">
+                    <span>🛒 <span class="hidden sm:inline">Cart</span></span>
+                    <span id="cart-badge" class="bg-orange-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">0</span>
+                </button>
+            </div>
+
+            <!-- Branch Switcher (Full-width row on mobile, centered on desktop) -->
+            <div class="w-full lg:w-auto order-3 lg:order-2 flex items-center justify-between lg:justify-start gap-2 bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                <span class="text-xs font-bold text-slate-500">📍 Station:</span>
+                <select id="station-select" onchange="changeStation(this.value)" class="bg-transparent text-xs sm:text-sm font-bold text-slate-900 focus:outline-none cursor-pointer flex-1 lg:flex-initial truncate">
+                </select>
+            </div>
+
+            <!-- Desktop Links -->
+            <div class="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-600 order-2">
+                <a href="#order" class="hover:text-orange-600">Order Refill</a>
+                <a href="#tracker" class="hover:text-orange-600">Live Tracker</a>
+                <a href="#safety" class="hover:text-orange-600">Safety & Quality</a>
+                <a href="#coverage" class="hover:text-orange-600">Delivery Zones</a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <header class="bg-gradient-to-br from-slate-900 via-slate-800 to-orange-950 text-white py-16 md:py-24 px-4">
+        <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
+            <div>
+                <span id="station-hero-pill" class="inline-block bg-orange-500/20 text-orange-300 border border-orange-500/30 text-xs font-semibold px-3 py-1 rounded-full mb-4">
+                    ⚡ Active Branch: SwiftFlame Westlands • Digital Scale Verified
+                </span>
+                <h1 class="text-4xl md:text-5xl font-extrabold leading-tight mb-4">
+                    Out of Cooking Gas? Get a Full Refill in <span class="text-orange-500">30 Minutes.</span>
+                </h1>
+                <p class="text-slate-300 text-lg mb-8">
+                    We swap all major brands (TotalEnergies, K-Gas, ProGas, Afrigas, Rubis). Pay via M-Pesa or Cash on delivery.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="#order" class="bg-orange-600 hover:bg-orange-500 text-white font-bold px-6 py-3.5 rounded-xl shadow-lg transition">
+                        Order Gas Now ↓
+                    </a>
+                    <a href="#tracker" class="bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3.5 rounded-xl border border-white/20 transition">
+                        📍 Track My Order
+                    </a>
+                </div>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur">
+                <h3 class="font-bold text-lg mb-4 text-orange-400">Why Customers Trust Us</h3>
+                <ul class="space-y-3 text-sm text-slate-200">
+                    <li class="flex items-center gap-3">✅ <span><strong>Exact Weight Guarantee:</strong> Weighed on a digital scale at your doorstep.</span></li>
+                    <li class="flex items-center gap-3">✅ <span><strong>Free Leak Test:</strong> Our rider connects and tests your regulator safely.</span></li>
+                    <li class="flex items-center gap-3">✅ <span><strong>All Brands Swapped:</strong> Exchange any empty cylinder seamlessly.</span></li>
+                    <li class="flex items-center gap-3">✅ <span><strong>7:00 AM – 10:00 PM Daily:</strong> Including weekends & public holidays.</span></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Live Order Tracker Section -->
+    <section id="tracker" class="max-w-6xl mx-auto pt-14 px-4">
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-6 mb-6">
+                <div>
+                    <span class="text-xs font-extrabold text-orange-600 uppercase tracking-wider">Live Delivery Status</span>
+                    <h2 id="track-order-title" class="text-2xl font-extrabold text-slate-900 mt-1">Order #SF-8492 (Demo Active)</h2>
+                    <p id="track-order-details" class="text-sm text-slate-500">1x 13kg Cylinder (TotalEnergies) • Destination: Kilimani, Argwings Kodhek Rd</p>
+                </div>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <input id="track-input" type="text" placeholder="Order ID e.g. SF-8492" class="border border-slate-300 rounded-lg px-3 py-2 text-sm uppercase w-full md:w-44 focus:outline-none focus:border-orange-500">
+                    <button onclick="lookupOrder()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-lg text-sm transition">
+                        Track
+                    </button>
+                </div>
+            </div>
+
+            <!-- 4 Live Progress Steps -->
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div id="step-1" class="border-2 border-green-500 bg-green-50 rounded-xl p-4 text-center transition">
+                    <div class="text-2xl mb-1">📝</div>
+                    <div class="font-extrabold text-sm">1. Order Confirmed</div>
+                    <div class="text-xs text-slate-500 mt-1">Received at Depot</div>
+                </div>
+                <div id="step-2" class="border-2 border-green-500 bg-green-50 rounded-xl p-4 text-center transition">
+                    <div class="text-2xl mb-1">⚖️</div>
+                    <div class="font-extrabold text-sm">2. Weighed & Sealed</div>
+                    <div class="text-xs text-slate-500 mt-1">Digital Scale Passed</div>
+                </div>
+                <div id="step-3" class="border-2 border-orange-500 bg-orange-50 rounded-xl p-4 text-center transition">
+                    <div class="text-2xl mb-1">🏍️</div>
+                    <div class="font-extrabold text-sm">3. Rider En Route</div>
+                    <div class="text-xs text-slate-500 mt-1">2.4 km away from you</div>
+                </div>
+                <div id="step-4" class="border-2 border-slate-200 bg-slate-50 opacity-50 rounded-xl p-4 text-center transition">
+                    <div class="text-2xl mb-1">🏠</div>
+                    <div class="font-extrabold text-sm">4. Delivered & Tested</div>
+                    <div class="text-xs text-slate-500 mt-1">Pending arrival</div>
+                </div>
+            </div>
+
+            <!-- Rider Details Bar (Updates dynamically per branch) -->
+            <div class="bg-slate-900 text-white rounded-xl p-4 md:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <div id="station-manager-label" class="text-xs text-slate-400 uppercase font-semibold">Assigned Dispatch Rider • Westlands Depot</div>
+                    <div id="station-rider-info" class="font-bold text-base">David Kamau • Boxer KMFG 412P ⭐ 4.9</div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="eta-display" class="bg-orange-600 text-white text-xs font-extrabold px-3.5 py-1.5 rounded-full">⏱️ ETA: 12 mins</span>
+                    <a id="station-call-btn" href="tel:+254700123456" class="bg-green-600 hover:bg-green-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition">📞 Call Rider</a>
+                </div>
+            </div>
+
+            <!-- Demo Controls for Testing on PC -->
+            <div class="flex justify-end items-center gap-2 mt-4 text-xs text-slate-500">
+                <span>Test Tracker on PC:</span>
+                <button onclick="advanceStage()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition">Advance Next Stage ➔</button>
+                <button onclick="resetTracker()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-1.5 rounded-lg transition">Reset</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Order Section -->
+    <section id="order" class="max-w-6xl mx-auto py-16 px-4">
+        <div class="text-center max-w-2xl mx-auto mb-10">
+            <h2 class="text-3xl font-extrabold mb-3">Select Your Cylinder & Brand</h2>
+            <p class="text-slate-600">Ordering from <strong id="order-branch-name" class="text-orange-600">SwiftFlame Westlands</strong>. Switch branches at the top anytime.</p>
+        </div>
+
+        <!-- Order Type & Brand Selector -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-col md:flex-row gap-6 justify-between items-center">
+            <div class="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
+                <button id="btn-refill" onclick="setOrderType('refill')" class="flex-1 md:flex-none px-5 py-2.5 rounded-lg text-sm font-bold bg-orange-600 text-white transition">
+                    Gas Refill (Swap)
+                </button>
+                <button id="btn-new" onclick="setOrderType('new')" class="flex-1 md:flex-none px-5 py-2.5 rounded-lg text-sm font-bold text-slate-600 hover:text-slate-900 transition">
+                    New Complete Cylinder
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <label for="brand-select" class="text-sm font-semibold text-slate-700 whitespace-nowrap">Preferred Brand:</label>
+                <select id="brand-select" class="w-full md:w-48 bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm font-semibold focus:outline-none focus:border-orange-500">
+                    <option value="TotalEnergies">TotalEnergies</option>
+                    <option value="K-Gas">K-Gas</option>
+                    <option value="ProGas">ProGas</option>
+                    <option value="Afrigas">Afrigas</option>
+                    <option value="Rubis Gas">Rubis Gas</option>
+                    <option value="MenGas">MenGas</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div id="product-grid" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+    </section>
+
+    <!-- Safety & Coverage -->
+    <section id="safety" class="bg-slate-900 text-white py-16 px-4">
+        <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12">
+            <div>
+                <h2 class="text-2xl font-extrabold mb-4 text-orange-400">LPG Safety Checklist</h2>
+                <div class="space-y-4 text-sm text-slate-300">
+                    <div class="bg-slate-800 p-4 rounded-xl">
+                        <h4 class="font-bold text-white mb-1">1. Keep Cylinders Upright</h4>
+                        <p>Always store and use your gas cylinder standing vertically in a well-ventilated area.</p>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-xl">
+                        <h4 class="font-bold text-white mb-1">2. Check the Seal</h4>
+                        <p>Ensure the factory heat-shrink seal on the valve is intact before accepting delivery.</p>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-xl">
+                        <h4 class="font-bold text-white mb-1">3. What if I smell gas?</h4>
+                        <p>Do not switch electrical lights on or off. Turn off the regulator, open windows, and move the cylinder outside.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="coverage">
+                <h2 class="text-2xl font-extrabold mb-4 text-orange-400">Delivery Coverage Zones</h2>
+                <p class="text-sm text-slate-300 mb-4">Active zones covered by <strong id="coverage-branch-name" class="text-white">SwiftFlame Westlands</strong>:</p>
+                <div id="station-zones-grid" class="grid grid-cols-2 gap-3 text-sm">
+                    <!-- Populated automatically per branch -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 text-slate-400 text-xs py-8 px-4 text-center">
+        <p>© 2026 SwiftFlame Gas Refill & Delivery Network. All Rights Reserved.</p>
+    </footer>
+
+    <!-- Slide-Out Cart Drawer -->
+    <div id="cart-modal" class="fixed inset-0 bg-black/60 z-50 hidden justify-end">
+        <div class="bg-white w-full max-w-md h-full flex flex-col justify-between p-6 overflow-y-auto">
+            <div>
+                <div class="flex items-center justify-between border-b pb-4 mb-4">
+                    <div>
+                        <h3 class="text-xl font-extrabold">Your Gas Order</h3>
+                        <p id="cart-branch-label" class="text-xs text-orange-600 font-bold">Dispatching from: SwiftFlame Westlands</p>
+                    </div>
+                    <button onclick="toggleCart()" class="text-slate-500 hover:text-slate-900 font-bold text-lg">✕</button>
+                </div>
+                <div id="cart-items" class="space-y-4 mb-6"></div>
+            </div>
+
+            <div class="border-t pt-4">
+                <div class="flex justify-between font-extrabold text-lg mb-4">
+                    <span>Total Amount:</span>
+                    <span id="cart-total" class="text-orange-600">KES 0</span>
+                </div>
+
+                <div class="space-y-3 mb-4">
+                    <input id="cust-name" type="text" placeholder="Your Full Name" class="w-full border rounded-lg px-3 py-2 text-sm">
+                    <input id="cust-address" type="text" placeholder="Estate, Apartment & House No." class="w-full border rounded-lg px-3 py-2 text-sm">
+                    
+                    <!-- GPS Location Capture Button -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+                        <button type="button" onclick="getCustomerLocation()" id="gps-btn" class="w-full bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 transition">
+                            📍 Pin My Exact GPS Location
+                        </button>
+                        <p id="gps-status" class="text-[11px] text-slate-500 mt-1.5 text-center">
+                            Tap above so our rider can navigate straight to your gate.
+                        </p>
+                    </div>
+
+                    <select id="cust-payment" class="w-full border rounded-lg px-3 py-2 text-sm bg-white">
+                        <option value="M-Pesa on Delivery">Pay via M-Pesa on Delivery</option>
+                        <option value="Cash on Delivery">Pay Cash on Delivery</option>
+                    </select>
+                </div>
+
+                <button onclick="placeOrderAndTrack()" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3.5 rounded-xl shadow transition mb-2">
+                    ✅ Confirm & Track Live Order
+                </button>
+                <button onclick="checkoutWhatsApp()" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3.5 rounded-xl shadow transition">
+                    📲 Send Order via WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+<!-- Sign In / Sign Up Modal -->
+    <div id="auth-modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl relative">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-900 font-bold text-lg">✕</button>
+            
+            <!-- Tabs -->
+            <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
+                <button id="tab-signin" onclick="switchAuthTab('signin')" class="flex-1 py-2 rounded-lg text-sm font-bold bg-white shadow-sm text-slate-900 transition">Sign In</button>
+                <button id="tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2 rounded-lg text-sm font-bold text-slate-500 hover:text-slate-900 transition">Create Account</button>
+            </div>
+
+            <!-- Sign In Form -->
+            <form id="signin-form" onsubmit="handleSignIn(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Phone Number or Email</label>
+                    <input id="login-identifier" type="text" required placeholder="e.g. 0712345678 or manager@swiftflame.co.ke" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Password</label>
+                    <input id="login-password" type="password" required placeholder="••••••••" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm">
+                </div>
+                <button type="submit" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-xl shadow transition">
+                    Sign In
+                </button>
+                <p class="text-[11px] text-slate-400 text-center">
+                    Station Managers: Sign in with your branch credentials to open Dispatch.
+                </p>
+            </form>
+
+            <!-- Sign Up Form -->
+            <form id="signup-form" onsubmit="handleSignUp(event)" class="space-y-3 hidden">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Account Type</label>
+                    <select id="reg-role" onchange="toggleBranchField()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white font-semibold">
+                        <option value="customer">Customer (Order Gas Faster)</option>
+                        <option value="rider">Dispatch Rider (Deliveries)</option>
+                        <option value="manager">Station Manager (Branch Dispatch)</option>
+                    </select>
+                </div>
+                <div id="reg-branch-wrap" class="hidden">
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Assigned Station Branch</label>
+                    <select id="reg-branch" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white font-semibold">
+                        <option value="SwiftFlame Westlands">SwiftFlame Westlands</option>
+                        <option value="SwiftFlame Kilimani">SwiftFlame Kilimani</option>
+                        <option value="SwiftFlame Kasarani">SwiftFlame Kasarani</option>
+                    </select>
+                    <input id="reg-plate" type="text" placeholder="Motorbike Plate (Riders only, e.g. KMFG 412P)" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm mt-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Full Name</label>
+                    <input id="reg-name" type="text" required placeholder="e.g. Jane Wanjiku" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Phone Number (WhatsApp)</label>
+                    <input id="reg-phone" type="tel" required placeholder="e.g. 0712345678" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Default Delivery Address / Landmark</label>
+                    <input id="reg-address" type="text" placeholder="e.g. Kilimani, Rose Avenue, Apt 4B" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Create Password</label>
+                    <input id="reg-password" type="password" required placeholder="Minimum 4 characters" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                </div>
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl shadow transition">
+                    Create Account & Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
